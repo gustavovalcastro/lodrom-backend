@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 class Portao(models.Model):
     device_id = models.ForeignKey(to=Dispositivo, on_delete=models.CASCADE)
     account_id = models.ForeignKey(to=Conta, on_delete=models.CASCADE)
-    pin = models.CharField(max_length=50, null=True, blank=True)
+    pin = models.CharField(max_length=4, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Portoes"
