@@ -12,4 +12,5 @@ router.registry.extend(recados_router.registry)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
+    path('', include('apps.controle_portao.urls')),
 ]
