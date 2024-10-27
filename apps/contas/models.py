@@ -21,7 +21,7 @@ class Conta(models.Model):
 @receiver(post_save,sender=Conta)
 def create_portao(sender, instance, created, **kwargs):
     if created:
-        print(f"INSTANCE: {instance.id}")
+        # print(f"INSTANCE: {instance.id}")
         Portao = apps.get_model('controle_portao', 'Portao')
         Portao.objects.create(
             device_id=instance.device_id,

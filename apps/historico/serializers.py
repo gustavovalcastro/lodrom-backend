@@ -1,8 +1,7 @@
 from rest_framework import serializers
-from apps.historico.models import Historico
+from .models import Historico
 
 class HistoricoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Historico
-        fields = '__all__'
-        # exclude = ['event_time']
+        fields = ['id', 'device_id', 'account_id', 'event_time', 'event_type']

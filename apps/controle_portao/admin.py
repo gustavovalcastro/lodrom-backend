@@ -5,7 +5,7 @@ from apps.controle_portao.models import Portao
 class Portoes(admin.ModelAdmin):
     list_display = ("id","get_account_name","get_device_code")
     list_display_links = ('id', 'get_account_name')
-    list_per_page = 20
+    list_per_page = 15
     search_fields = ('device_id__device_code','account_id__user__username',)
 
     @admin.display(description="Device Code")

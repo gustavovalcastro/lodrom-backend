@@ -1,11 +1,6 @@
-from django.urls import path, include
-from rest_framework import routers
+from django.urls import path
+from .views import RecadoView
 
-from apps.recados.views import RecadoViewSet
-
-router = routers.SimpleRouter()
-router.register('recados', RecadoViewSet, basename='Recados')
-
-# urlpatterns = [
-    # path('', include(router.urls)),
-# ]
+urlpatterns = [
+    path('recados/', RecadoView.as_view(), name='recados'),
+]

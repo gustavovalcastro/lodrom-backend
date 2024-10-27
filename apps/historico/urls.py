@@ -1,11 +1,6 @@
-from django.urls import path, include
-from rest_framework import routers
+from django.urls import path
+from .views import HistoricoAPIView
 
-from apps.historico.views import HistoricoViewSet
-
-router = routers.SimpleRouter()
-router.register('historico', HistoricoViewSet, basename='Historico')
-
-# urlpatterns = [
-    # path('', include(router.urls)),
-# ]
+urlpatterns = [
+    path('historico/', HistoricoAPIView.as_view(), name='historico-api'),
+]
