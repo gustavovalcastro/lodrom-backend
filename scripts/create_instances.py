@@ -37,12 +37,17 @@ def create():
             str(os.getenv('DEFAULT_CONTA_USERNAME')),
             str(os.getenv('DEFAULT_CONTA_USERNAME_2')),
         ]
-        for username in usernames:
+        emails = [
+            str(os.getenv('DEFAULT_CONTA_EMAIL')),
+            str(os.getenv('DEFAULT_CONTA_EMAIL_2')),
+        ]
+        for i, username in enumerate(usernames):
             user = User.objects.filter(username=username).first()
 
             if not user:
                 user = User.objects.create_user(
                     username=username,
+                    email=emails[i],
                     password=str(os.getenv('DEFAULT_CONTA_PASSWORD')),
                 )
 

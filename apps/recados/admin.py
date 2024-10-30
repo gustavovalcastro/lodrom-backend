@@ -1,8 +1,6 @@
 from django.contrib import admin
 
 from apps.recados.models import Recado
-from apps.dispositivos.models import Dispositivo
-from apps.contas.models import Conta
 
 class UsernameFilter(admin.SimpleListFilter):
     title = 'Username'
