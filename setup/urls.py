@@ -31,6 +31,7 @@ urlpatterns = [
     path('', include('apps.historico.urls')),
     path('', include('apps.recados.urls')),
     path('', include('apps.controle_portao.urls')),
+    path('', include('apps.config.urls')),
     
     # Swagger API Doc
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

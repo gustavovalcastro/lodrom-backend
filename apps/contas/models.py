@@ -12,6 +12,7 @@ class Conta(models.Model):
         ("2", "Dispositivo"),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=14, blank=False, null=False)
     device_id = models.ForeignKey(to=Dispositivo, on_delete=models.PROTECT)
     user_type = models.CharField(max_length=1,choices=USER_TYPE,null=False,default="1")
 

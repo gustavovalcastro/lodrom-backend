@@ -36,10 +36,17 @@ def create():
         usernames = [
             str(os.getenv('DEFAULT_CONTA_USERNAME')),
             str(os.getenv('DEFAULT_CONTA_USERNAME_2')),
+            str(os.getenv('DEFAULT_CONTA_USERNAME_3')),
         ]
         emails = [
             str(os.getenv('DEFAULT_CONTA_EMAIL')),
             str(os.getenv('DEFAULT_CONTA_EMAIL_2')),
+            str(os.getenv('DEFAULT_CONTA_EMAIL_3')),
+        ]
+        phone_numbers = [
+            str(os.getenv('DEFAULT_CONTA_PHONE')),
+            str(os.getenv('DEFAULT_CONTA_PHONE_2')),
+            str(os.getenv('DEFAULT_CONTA_PHONE_3')),
         ]
         for i, username in enumerate(usernames):
             user = User.objects.filter(username=username).first()
@@ -55,4 +62,5 @@ def create():
                 Conta.objects.create(
                     user=user,
                     device_id=device,
+                    phone_number=phone_numbers[i],
                 )

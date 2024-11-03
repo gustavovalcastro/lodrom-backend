@@ -19,7 +19,7 @@ class Portao(models.Model):
         if self.pk is not None:
             original = Portao.objects.get(pk=self.pk)
             if original.account_id != self.account_id:
-                raise ValidationError("Você não pode modificar o campo Conta.")
+                raise ValidationError("You can't change the account_id field.")
             if original.device_id != self.device_id:
-                raise ValidationError("Você não pode modificar o campo Dispositivo.")
+                raise ValidationError("You can't change the device_id field..")
         super().save(*args, **kwargs)
