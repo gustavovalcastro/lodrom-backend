@@ -9,10 +9,12 @@ class Recado(models.Model):
     device_id = models.ForeignKey(to=Dispositivo, on_delete=models.RESTRICT)
     account_id = models.ForeignKey(to=Conta, on_delete=models.CASCADE)
     message = models.CharField(max_length=200, null=False, blank=False)
+    audio_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     days_week = models.CharField(max_length=100, null=True, blank=True)  # JSON string
+    #path/url
 
     def clean(self):
         if self.days_week:
