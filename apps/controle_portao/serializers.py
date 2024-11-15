@@ -19,6 +19,17 @@ class OpenPortaoSerializer(serializers.Serializer):
 
         return data
 
+class CheckPinSerializer(serializers.Serializer):
+    def validate(self, data):
+        user = self.context['request'].user
+        conta = get_object_or_404(Conta, user=user)
+        portao = get_object_or_404(Portao, account_id=conta)
+
+        if not portao.pin:
+            raise serializers.ValidationError({"detail": "PIN hasn't been set yet."})
+
+        return data
+
 class SetPinSerializer(serializers.Serializer):
     pin1 = serializers.CharField(max_length=4, min_length=4)
     pin2 = serializers.CharField(max_length=4, min_length=4)

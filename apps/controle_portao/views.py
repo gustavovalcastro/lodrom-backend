@@ -5,7 +5,8 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
-from .serializers import OpenPortaoSerializer, PortaoListSerializer, ResetPinSerializer, SetPinSerializer
+from .serializers import OpenPortaoSerializer, PortaoListSerializer, ResetPinSerializer, \
+        CheckPinSerializer, SetPinSerializer
 from .models import Portao
 from apps.contas.models import Conta
 
@@ -23,6 +24,19 @@ class OpenPortaoView(APIView):
             return Response({"message": "Portao has opened successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class CheckPinView(APIView):
+    serializer_class = CheckPinSerializer
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        responses={200: CheckPinSerializer(many=True)},
+        security=[{'Bearer': []}]  # Specify the security requirement
+    )
+    def get(self, request):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            return Response({"message": "PIN has already been created."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SetPinView(APIView):
     serializer_class = SetPinSerializer
@@ -82,3 +96,4 @@ class PortaoListView(APIView):
 
         serializer = PortaoListSerializer(portoes, many=True)
         return Response(serializer.data)
+
