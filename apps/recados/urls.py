@@ -1,6 +1,9 @@
 from django.urls import path
-from .views import RecadoView
+from .views import RecadoCreateView, RecadoDeleteView, RecadoEditView, RecadoListView
 
 urlpatterns = [
-    path('recados/', RecadoView.as_view(), name='recados'),
+    path('recados/list/', RecadoListView.as_view(), name='recados-list'),
+    path('recados/create/', RecadoCreateView.as_view(), name='recados'),
+    path('recados/edit/<int:pk>', RecadoEditView.as_view(), name='recado-edit'),
+    path('recados/delete/<int:pk>', RecadoDeleteView.as_view(), name='recado-delete'),
 ]
