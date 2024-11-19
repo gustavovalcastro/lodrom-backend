@@ -14,7 +14,6 @@ class Recado(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     days_week = models.CharField(max_length=100, null=True, blank=True)  # JSON string
-    #path/url
 
     def clean(self):
         if self.days_week:

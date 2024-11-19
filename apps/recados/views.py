@@ -5,12 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 from .serializers import RecadoEditSerializer, RecadoCreateSerializer, RecadoListSerializer
 from drf_yasg.utils import swagger_auto_schema
-import boto3
-import os
-import uuid
 from .models import Recado
 from apps.contas.models import Conta
 from apps.dispositivos.models import Dispositivo
+from .audio_utils import AudioUtils
+import boto3
 
 class RecadoListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,67 +34,24 @@ class RecadoCreateView(APIView):
 
     @swagger_auto_schema(
         request_body=RecadoCreateSerializer,
-        security=[{'Bearer': []}]  # Specify the security requirement
+        security=[{'Bearer': []}]
     )
     def post(self, request):
         user = request.user
         conta = user.conta
         dispositivo = conta.device_id
         
-        # Pass the entire request.data to the serializer
         serializer = RecadoCreateSerializer(data=request.data)
         if serializer.is_valid():
             recado = serializer.save(device_id=dispositivo, account_id=conta)
-            
-            audio_url = self.text_to_speech(recado.message, dispositivo.device_code)
+
+            audio_url = AudioUtils.text_to_speech(recado.message, dispositivo.device_code)
             if audio_url:
                 recado.audio_url = audio_url
                 recado.save()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def text_to_speech(self, message, folder):
-        polly_client = boto3.client(
-            "polly",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_REGION_NAME
-        )
-        
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_REGION_NAME
-        )
-
-        try:
-            response = polly_client.synthesize_speech(
-                Text=message,
-                OutputFormat="mp3",
-                VoiceId="Ricardo" #Camila
-            )
-
-            audio_file_name = f"recado_{uuid.uuid4()}.mp3"
-            
-            temp_audio_path = os.path.join(settings.MEDIA_ROOT, audio_file_name)
-            with open(temp_audio_path, 'wb') as audio_file:
-                audio_file.write(response['AudioStream'].read())
-            
-            s3_bucket = settings.AWS_S3_BUCKET_NAME
-            s3_key = f"{folder}/{audio_file_name}"
-            s3_client.upload_file(temp_audio_path, s3_bucket, s3_key)
-            
-            audio_url = f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
-
-            os.remove(temp_audio_path)
-            
-            return audio_url
-
-        except Exception as e:
-            print(f"Error while creating audio or sending it to S3: {e}")
-            return None
 
 class RecadoEditView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,10 +66,25 @@ class RecadoEditView(APIView):
         except Recado.DoesNotExist:
             return Response({"detail": "Recado was not found.", "id": pk}, status=status.HTTP_404_NOT_FOUND)
 
+        old_message = recado.message
+        old_audio_url = recado.audio_url
+
         serializer = RecadoEditSerializer(recado, data=request.data, partial=True, context={'id': pk})
         if serializer.is_valid():
             updated_recado = serializer.save()
-            return Response({"detail": "Recado have been updated successfully.", "message_id": updated_recado.id}, status=status.HTTP_200_OK)
+
+            if old_message != updated_recado.message:
+                # Delete old audio if the message has changed
+                if old_audio_url:
+                    AudioUtils.delete_s3_file(old_audio_url)
+
+                # Generate new audio
+                audio_url = AudioUtils.text_to_speech(updated_recado.message, updated_recado.device_id.device_code)
+                if audio_url:
+                    updated_recado.audio_url = audio_url
+                    updated_recado.save()
+
+            return Response({"detail": "Recado has been updated successfully.", "message_id": updated_recado.id}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RecadoDeleteView(APIView):
@@ -125,5 +96,23 @@ class RecadoDeleteView(APIView):
         except Recado.DoesNotExist:
             return Response({"detail": "Recado was not found.", "id": pk}, status=status.HTTP_404_NOT_FOUND)
 
-        recado.delete() 
-        return Response({"message": "Recado has been deleted successfully.", "message_id": pk}, status=status.HTTP_200_OK)
+        if recado.audio_url:
+            try:
+                bucket_name = settings.AWS_S3_BUCKET_NAME
+                audio_key = recado.audio_url.split(f"https://{bucket_name}.s3.amazonaws.com/")[-1]
+                
+                s3_client = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_REGION_NAME
+                )
+
+                s3_client.delete_object(Bucket=bucket_name, Key=audio_key)
+
+            except Exception as e:
+                return Response({"detail": f"Failed to delete audio file: {str(e)}", "id": pk}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        recado.delete()
+
+        return Response({"message": "Recado and associated audio have been deleted successfully.", "message_id": pk}, status=status.HTTP_200_OK)
