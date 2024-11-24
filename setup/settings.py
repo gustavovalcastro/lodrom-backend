@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
+
+    'corsheaders', # Remove later
 ]
 
 REST_FRAMEWORK = {
@@ -74,6 +76,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware', # Remove later
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -176,3 +180,6 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_REGION_NAME = os.getenv('AWS_REGION_NAME', 'us-east-1') 
 AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME') 
 MEDIA_ROOT = os.getenv('MEDIA_ROOT') 
+
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True

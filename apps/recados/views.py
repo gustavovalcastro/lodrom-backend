@@ -3,13 +3,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
-from .serializers import RecadoEditSerializer, RecadoCreateSerializer, RecadoListSerializer
 from drf_yasg.utils import swagger_auto_schema
+from apps.dispositivos.models import Dispositivo
+import boto3
+
+from .serializers import RecadoEditSerializer, RecadoCreateSerializer, RecadoListSerializer
+from .audio_utils import AudioUtils
+from .mqtt_utils import publish_to_mqtt
 from .models import Recado
 from apps.contas.models import Conta
-from apps.dispositivos.models import Dispositivo
-from .audio_utils import AudioUtils
-import boto3
 
 class RecadoListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -38,19 +40,42 @@ class RecadoCreateView(APIView):
     )
     def post(self, request):
         user = request.user
-        conta = user.conta
-        dispositivo = conta.device_id
-        
+
+        try:
+            conta = user.conta
+            dispositivo = conta.device_id
+        except AttributeError:
+            return Response({"error": "User is not associated with a valid account or device."}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+
         serializer = RecadoCreateSerializer(data=request.data)
         if serializer.is_valid():
+            # Save the Recado instance
             recado = serializer.save(device_id=dispositivo, account_id=conta)
 
+            # Generate the audio URL
             audio_url = AudioUtils.text_to_speech(recado.message, dispositivo.device_code)
             if audio_url:
                 recado.audio_url = audio_url
                 recado.save()
 
+                # MQTT publishing
+                topic = f"{dispositivo.device_code}/recados"
+                payload = {
+                    "type": 1,
+                    "audio_url": audio_url,
+                    "device_id": dispositivo.device_code
+                }
+                try:
+                    publish_to_mqtt(topic, payload)
+                except Exception as e:
+                    return Response(
+                        {"error": f"Failed to publish MQTT message: {str(e)}"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RecadoEditView(APIView):

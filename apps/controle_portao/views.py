@@ -9,6 +9,7 @@ from .serializers import OpenPortaoSerializer, PortaoListSerializer, ResetPinSer
         CheckPinSerializer, SetPinSerializer
 from .models import Portao
 from apps.contas.models import Conta
+from .mqtt_utils import publish_to_mqtt
 
 class OpenPortaoView(APIView):
     serializer_class = OpenPortaoSerializer
@@ -16,12 +17,31 @@ class OpenPortaoView(APIView):
 
     @swagger_auto_schema(
         request_body=OpenPortaoSerializer,
-        security=[{'Bearer': []}]  # Specify the security requirement
+        security=[{'Bearer': []}]
     )
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            return Response({"message": "Portao has opened successfully."}, status=status.HTTP_200_OK)
+            # Retrieve the authenticated user's device_code
+            try:
+                user = request.user
+                conta = get_object_or_404(Conta, user=user)
+                device_code = user=conta.device_id.device_code
+            except Exception as e:
+                return Response({"error": f"{e}"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # MQTT topic and payload
+            topic = f"{device_code}/controle_portao"
+            payload = {"open": True, "device_code": device_code}
+
+            # Publish to MQTT broker
+            try:
+                publish_to_mqtt(topic, payload)
+                return Response({"message": "Portao has opened successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": f"Failed to publish to MQTT broker: {str(e)}"},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CheckPinView(APIView):
