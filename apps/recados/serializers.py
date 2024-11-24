@@ -38,8 +38,10 @@ class RecadoCreateSerializer(serializers.Serializer):
 class RecadoEditSerializer(serializers.ModelSerializer):
     message = serializers.CharField(max_length=200)
     created_at = serializers.DateTimeField(read_only=True)
-    start_time = serializers.TimeField(required=False)
-    end_time = serializers.TimeField(required=False)
+    # start_time = serializers.TimeField(required=False)
+    # end_time = serializers.TimeField(required=False)
+    start_time = serializers.TimeField(required=False, allow_null=True)
+    end_time = serializers.TimeField(required=False, allow_null=True)
     days_week = serializers.ListField(
         child=serializers.ChoiceField(choices=["sun", "mon", "tue", "wed", "thu", "fri", "sat"]),
         required=False,
