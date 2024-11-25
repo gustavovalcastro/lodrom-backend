@@ -3,6 +3,7 @@ from rest_framework.generics import get_object_or_404
 
 from .models import Historico
 from apps.dispositivos.models import Dispositivo
+from .telegram import send
 
 class HistoricoSerializer(serializers.ModelSerializer):
     account_username = serializers.CharField(source='account_id.user.username', read_only=True)
@@ -26,7 +27,14 @@ class HistoricoCreateSerializer(serializers.Serializer):
 
         dispositivo = get_object_or_404(Dispositivo, device_code=device_code)
 
-        return Historico.objects.create(
+        # Create the Historico instance
+        historico = Historico.objects.create(
             device_id=dispositivo,
             event_type=event_type
         )
+
+        # Call the send function if event_type is "3"
+        if event_type == "3":
+            send()
+
+        return historico

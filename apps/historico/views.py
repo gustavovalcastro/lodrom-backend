@@ -7,6 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from .models import Historico
 from .serializers import HistoricoSerializer, HistoricoCreateSerializer
 from apps.contas.models import Conta
+from .telegram import send
 
 class HistoricoListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -28,14 +29,6 @@ class HistoricoCreateView(APIView):
     @swagger_auto_schema(
         request_body=HistoricoCreateSerializer,
     )
-    # @swagger_auto_schema(
-        # request_body=HistoricoCreateSerializer,
-        # responses={
-            # 201: HistoricoSerializer,
-            # 400: "Invalid payload or data",
-            # 404: "Device not found",
-        # }
-    # )
     def post(self, request):
         serializer = HistoricoCreateSerializer(data=request.data)
         if serializer.is_valid():
